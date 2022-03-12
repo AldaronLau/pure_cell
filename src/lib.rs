@@ -1,3 +1,13 @@
+// Pure Cell
+// Copyright © 2022 Jeron Aldaron Lau.
+//
+// Licensed under any of:
+// - Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+// - MIT License (https://mit-license.org/)
+// - Boost Software License, Version 1.0 (https://www.boost.org/LICENSE_1_0.txt)
+// At your choosing (See accompanying files LICENSE_APACHE_2_0.txt,
+// LICENSE_MIT.txt and LICENSE_BOOST_1_0.txt).
+//
 //! Alternative to `GhostCell` that provides safe interior mutability via const
 //! expressions.
 //!
@@ -37,9 +47,32 @@
 //! assert_eq!(state, 17);
 //! ```
 
-use std::{cell::UnsafeCell, mem::ManuallyDrop};
+#![no_std]
+#![doc(
+    html_logo_url = "https://ardaku.github.io/mm/logo.svg",
+    html_favicon_url = "https://ardaku.github.io/mm/icon.svg",
+    html_root_url = "https://docs.rs/pure_cell"
+)]
+#![warn(
+    anonymous_parameters,
+    missing_copy_implementations,
+    missing_debug_implementations,
+    missing_docs,
+    nonstandard_style,
+    rust_2018_idioms,
+    single_use_lifetimes,
+    trivial_casts,
+    trivial_numeric_casts,
+    unreachable_pub,
+    unused_extern_crates,
+    unused_qualifications,
+    variant_size_differences
+)]
+
+use core::{cell::UnsafeCell, mem::ManuallyDrop};
 
 /// A cell type that provides interior mutability via "pure" functions.
+#[derive(Debug)]
 pub struct PureCell<T> {
     value: UnsafeCell<ManuallyDrop<T>>,
 }
