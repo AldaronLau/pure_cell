@@ -10,7 +10,7 @@
 
 [package]
 name = "pure_cell"
-version = "0.1.0"
+version = "0.2.0"
 license = "Apache-2.0 OR MIT OR BSL-1.0"
 description = "Alternative to GhostCell that provides safe interior mutability via const expressions."
 repository = "https://github.com/AldaronLau/pure_cell"
