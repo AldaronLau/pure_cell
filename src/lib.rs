@@ -29,7 +29,7 @@
 //! use pure_cell::{PureCell, pure_cell};
 //!
 //! let mut cell = PureCell::new(15);
-//! pure_cell!(cell, |state: u32| {
+//! pure_cell!(cell, (), |state: u32, _args: ()| {
 //!     state += 1;
 //! });
 //! let got = cell.get();
@@ -40,8 +40,9 @@
 //! use pure_cell::{PureCell, pure_cell};
 //!
 //! let cell = PureCell::new(15);
-//! let state = pure_cell!(cell, |state: u32| -> u32 {
-//!     state += 2;
+//! let amount = 2;
+//! let state = pure_cell!(cell, amount, |state: u32, amount: u32| -> u32 {
+//!     state += amount;
 //!     state
 //! });
 //! assert_eq!(state, 17);
@@ -116,24 +117,34 @@ impl<T> Drop for PureCell<T> {
 /// Main safe mechanism to mutate [`PureCell`] via a `const` expression.
 #[macro_export]
 macro_rules! pure_cell {
-    ($pure_cell:expr, |$state:ident: $ty:ty| -> $ret:ty $block:block) => ({
+    (
+        $pure_cell:expr,
+        $input:expr,
+        |$state:ident: $ty:ty, $args:ident: $argty:ty| -> $ret:ty $block:block
+    ) => ({
         #[inline(always)]
-        const fn const_fn(mut $state: $ty) -> ($ty, $ret) {
+        const fn const_fn(mut $state: $ty, mut $args: $argty) -> ($ty, $ret) {
             let (output, state) = ($block, $state);
             (state, output)
         }
-        fn wrapper_fn(state: &mut core::mem::ManuallyDrop<$ty>) -> $ret {
+        fn wrapper_fn(
+            state: &mut core::mem::ManuallyDrop<$ty>,
+            input: $argty,
+        ) -> $ret {
             unsafe {
-                let (new, out) = const_fn(core::mem::ManuallyDrop::take(state));
+                let (new, out) = const_fn(
+                    core::mem::ManuallyDrop::take(state),
+                    input,
+                );
                 *state = core::mem::ManuallyDrop::new(new);
                 out
             }
         }
         unsafe {
-            $pure_cell.with(wrapper_fn)
+            $pure_cell.with(move |state| wrapper_fn(state, $input))
         }
     });
-    ($pure_cell:expr, |$state:ident: $ty:ty| $block:block) => (
-        $crate::pure_cell!($pure_cell, |$state: $ty| -> () $block)
+    ($pure_cell:expr, $input:expr, |$state:ident: $ty:ty, $args:ident: $argty:ty| $block:block) => (
+        $crate::pure_cell!($pure_cell, $input, |$state: $ty, $args: $argty| -> () $block)
     );
 }
